@@ -16,9 +16,9 @@ class JokeStore {
 	constructor() {
 		const firstJoke = joke('Why did the chicken cross the road?');
 		// We use extendObservable to set which properties of our model should 
-		// 	be reactive. When these properties change, mobx will trigger 
-		//  reactions e.g: rerender things that depend on them, computed 
-		//  properties, autoruns we've added
+		//	be reactive. When these properties change, mobx will trigger 
+		//	reactions e.g: rerender things that depend on them, computed 
+		//	properties, autoruns we've added
 		extendObservable(this, {
 			currentJokeIndex: 0,
 			hasPrevious: 0,
@@ -29,8 +29,8 @@ class JokeStore {
 			popularLimit: 2,
 
 			// This is an example of a computed property, 
-			// 	When the dependencies update (in this case jokesById) and only 
-			// 	when deps update, this function will be called to reflect the 
+			//	When the dependencies update (in this case jokesById) and only 
+			//	when deps update, this function will be called to reflect the 
 			//	changes.
 			popularJokes: computed(() => {
 				const jokes = this.jokesAsArray;
@@ -46,6 +46,8 @@ class JokeStore {
 			}),
 		});
 
+		// autorun functions are called every time one of the depended on
+		// properties are updated. 
 		autorun(() => {
 			console.log(this.jokesAsArray.slice());
 		})
