@@ -1,6 +1,9 @@
 import {extendObservable, action} from 'mobx';
 import omit from 'lodash/omit';
 
+function prefix(actionName) {
+	return `userStore/${actionName}`;
+}
 
 const Reactions = {
 	like: 'LIKE',
@@ -24,7 +27,7 @@ class UserStore {
 		return this.reactedJokes[id] === Reactions.dislike;
 	}
 
-	likeJoke = action('userStore/likeJoke', id => {
+	likeJoke = action(prefix('likeJoke'), id => {
 		const currentReaction = this.reactedJokes[id];
 
 		if (currentReaction === Reactions.like) {
@@ -35,9 +38,9 @@ class UserStore {
 				[id]: Reactions.like,
 			}
 		}
-	})
+	});
 
-	dislikeJoke = action('userStore/dislikeJoke', id => {
+	dislikeJoke = action(prefix('dislikeJoke'), id => {
 		const currentReaction = this.reactedJokes[id];
 		if (currentReaction === Reactions.dislike) {
 			this.reactedJokes = omit(this.reactedJokes, id);
@@ -47,9 +50,9 @@ class UserStore {
 				[id]: Reactions.dislike,
 			}
 		}
-	})
+	});
 
-	favoriteJoke = action('userStore/favoriteJoke', id => {
+	favoriteJoke = action(prefix('favoriteJoke'), id => {
 		const currentReaction = this.favoriteJokes[id];
 		this.favoriteJokes = {
 			...this.favoriteJokes,

@@ -1,5 +1,9 @@
 import {extendObservable, action} from 'mobx';
 
+function prefix(actionName) {
+	return `uiStore/${actionName}`;
+}
+
 class UIStore {
 	constructor() {
 		extendObservable(this, {
@@ -7,7 +11,7 @@ class UIStore {
 		});
 	}
 
-	setClicked = action('setClicked', () => {
+	setClicked = action(prefix('setClicked'), () => {
 		this.hasClickedNav = true;
 	});
 }

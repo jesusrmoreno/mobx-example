@@ -8,10 +8,59 @@
 
 body {
 	font-size: 62.5%;
-	font-family: sans-serif;
+	font-family: 'Roboto Sans', Helvetica, Arial, Sans-Serif;
 	overflow: hidden;
 }
 
 #root {
 	overflow: hidden;
+}
+
+.jokeDisplay {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex: 1;
+
+	max-width: 100%;
+	width: 100%;
+	padding: 16px;
+	
+	text-align: center;
+	color: rgba(0, 0, 0, .87);
+}
+
+.jokeDisplay_content {
+	font-size: 2rem;
+	font-weight: 600;
+}
+
+.navigationArrow {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 64px;
+	height: 64px;
+	border-radius: 100%;
+	overflow: hidden;
+	cursor: pointer;
+	transition: all 250ms;
+	background-color: rgba(255, 255, 255, .57);
+}
+
+.navigationArrow--left {
+	transform: translateX(-10px);
+	background-color: rgba(255, 255, 255, .27);
+}
+
+.navigationArrow--right {
+	transform: translateX(10px);
+}
+
+.navigationArrow--enabled {
+	opacity: 1;
+}
+
+.navigationArrow--disabled {
+	opacity: 0;
 }

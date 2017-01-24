@@ -1,20 +1,41 @@
 import React from 'react';
-const Reaction = ({onClick, iconClass, reactedIconClass, caption, hasReacted}) => (
-	<div onClick={onClick} style={{
-		textAlign: 'center',
+
+const Styles = {
+	ReactionContainer: {
 		flex: 1, 
 		padding: 8,
+
 		border: 'none',
-		color: hasReacted ? 'white' : 'black',
-		background: 'none',
 		outline: 'none',
-		cursor: 'pointer',
+		background: 'none',
+		
+		textAlign: 'center',
 		fontWeight: 600,
+		cursor: 'pointer',
 		transition: 'all 75ms',
-		transform: `scaleX(${hasReacted ? '1.3' : '1'}) scaleY(${hasReacted ? '1.3' : '1'})`
+	},
+
+	Caption: {
+		padding: 8,
+	}
+};
+
+const Reaction = ({onClick, iconClass, reactedIconClass, caption, hasReacted}) => (
+	<div onClick={onClick} style={{
+		...Styles.ReactionContainer,
+		color: hasReacted ? 'white' : 'black',
+		transform: `scale(${hasReacted ? '1.3' : '1'})`,
 	}}>
-		<div><i className={hasReacted && reactedIconClass ? reactedIconClass : iconClass} /></div>
-		<div style={{padding: 8}}>{caption}</div>
+		<div>
+			<i className={
+				hasReacted && reactedIconClass 
+					? reactedIconClass 
+					: iconClass
+			} />
+		</div>
+		<div style={Styles.Caption}>
+			{caption}
+		</div>
 	</div>
 );
 

@@ -1,35 +1,8 @@
 import {extendObservable, computed, action, autorun, observable} from 'mobx';
-import uniqueId from 'lodash/uniqueId';
 import omit from 'lodash/omit';
-import keyBy from 'lodash/keyBy';
-import shuffle from 'lodash/shuffle';
-
-const initialJokes = [
-	`A user interface is like a good joke. If you have to explain it, it's not that good.`,
-	`I'm reading a book about anti-gravity. It's impossible to put down.`,
-	`I wondered why the baseball was getting bigger. Then it hit me.`,
-	`I'd tell you a chemistry joke but I know I wouldn't get a reaction.`,
-	`I used to be a banker but I lost interest.`,
-	`Have you ever tried to eat a clock? It's very time consuming.`,
-	`Claustrophobic people are more productive thinking outside the box.`,
-	`Why did the web designer storm out of the restaurant? She was offended by the table layout.`,
-	`"Knock, knock.” “Who’s there?” very long pause…. “Java.”`,
-	`A SQL query goes into a bar, walks up to two tables and asks, "Can I join you?"`,
-	`To understand what recursion is, you must first understand recursion.`,
-	`I tried to hire a javascript plumber the other day. He didn’t callback, but made a promise to fix a-sink for me.`,
-	`What did the Southern web developer say when he found out his team stopped using version control? Y’all better Git!`,
-	`Why was the JavaScript reality show cancelled after only one episode? People thought it seemed scripted.`,
-	`You can't run through a camp site, you can only ran because it's past tents`,
-	`Corduroy pillows are making headlines.`,
-	`You want to clone yourself? Now wouldn't that be just like you!`,
-	`Shout out to anyone wondering what the opposite of in is.`,
-	`A walrus was frozen to absolute zero; he's 0K now.`,
-	`Plateaus are the highest form of flattery.`,
-];
 
 function joke(text) {
 	return {
-		id: uniqueId('joke_'),
 		text,
 		createdAt: Date.now(),
 		likes: 0,
@@ -38,22 +11,23 @@ function joke(text) {
 	};
 }
 
+function prefix(actionName) {
+	return `jokeStore/${actionName}`;
+}
+
 class JokeStore {
-	constructor() {
-		const firstJokes = keyBy(shuffle(
-			initialJokes.map(text => joke(text))
-		), 'id');
+	constructor(db) {
 		// We use extendObservable to set which properties of our model should 
 		//  be reactive. When these properties change, mobx will trigger 
 		//  reactions e.g: rerender things that depend on them, computed 
 		//  properties, autoruns we've added
 		extendObservable(this, {
 			meta: {
-				isLoading: false,
+				isLoading: true,
 			},
 			currentJokeIndex: 0,
 			
-			jokesById: observable(firstJokes),
+			jokesById: observable({}),
 			popularLimit: 2,
 
 			// This is an example of a computed property, 
@@ -68,7 +42,11 @@ class JokeStore {
 			// This will be run when we add a new joke to our jokesById obj
 			jokesAsArray: computed(() => {
 				return Object.keys(this.jokesById).map(
-					id => this.jokesById[id]
+					id => Object.assign(
+						{}, 
+						this.jokesById[id],
+						{id},
+					)
 				);
 			}),
 			hasNext: computed(() => (
@@ -77,18 +55,33 @@ class JokeStore {
 			hasPrevious: computed(() => this.currentJokeIndex > 0),
 		});
 
+		// Once we get the results from the database we want to upload and
+		// set the action to 
+		db.on('value', action(snapshot => {
+			this.jokesById = {
+				...this.jokesById,
+				...snapshot.val(),
+			};
+			this.setLoadingStatus(false);
+		}));
+
 		// autorun functions are called every time one of the depended on
 		// properties are updated. 
 		autorun(() => {
-			// console.log(this.jokesAsArray.slice());
+			console.log(this.jokesAsArray.slice());
 			// console.log(this.jokesAsArray.length);
 			// console.log(this.currentJokeIndex);
-		})
+		});
 	}
+
+
+	setLoadingStatus = action(prefix('setLoadingStatus'), (status) => {
+		this.meta.isLoading = status;
+	});
 
 	// This is an example of an action 
 	// actions are used to modify state.
-	addJokeAction = action('addJoke', (text) => {
+	addJokeAction = action(prefix('addJoke'), (text) => {
 		const newJoke = joke(text);
 
 		// this.jokesById[newJoke.id] = newJoke;
@@ -108,7 +101,6 @@ class JokeStore {
 	// without having to wrap it in an action. 
 	// addJoke = (text) => {
 		// const newJoke = joke(text);
-
 		// this.jokesById[newJoke.id] = newJoke;
 		// this is common mistake: mobx by default only tracks existing 
 		//  properties for objects. 
@@ -122,36 +114,36 @@ class JokeStore {
 		// };
 	// }
 
-	deleteJoke = action('deleteJoke', (id) => {
+	deleteJoke = action(prefix('deleteJoke'), (id) => {
 		this.jokesById = omit(this.jokesById, id);
 	});
 
-	likeJoke = action('likeJoke', (id) => {
+	likeJoke = action(prefix('likeJoke'), (id) => {
 		this.jokesById[id].likes++;
 	});
 
-	dislikeJoke = action('dislikeJoke', (id) => {
+	dislikeJoke = action(prefix('dislikeJoke'), (id) => {
 		this.jokesById[id].dislikes++;
 	});
 
-	favoriteJoke = action('favoriteJoke', (id) => {
+	favoriteJoke = action(prefix('favoriteJoke'), (id) => {
 		this.jokesById[id].favorites++;
 	});
 
-	goToNextJoke = action('goToNextJoke', () => {
-		if (this.currentJokeIndex < this.jokesAsArray.length - 1) {
+	goToNextJoke = action(prefix('goToNextJoke'), () => {
+		if (this.hasNext) {
 			this.currentJokeIndex++;
 		}
 	});
 
-	goToPreviousJoke = action('goToPreviousJoke', () => {
-		if (this.currentJokeIndex > 0) {
+	goToPreviousJoke = action(prefix('goToPreviousJoke'), () => {
+		if (this.hasPrevious) {
 			this.currentJokeIndex--;
 		}
 	});
 }
 
-export default new JokeStore();
+// export default new JokeStore();
 
 export {
 	JokeStore
