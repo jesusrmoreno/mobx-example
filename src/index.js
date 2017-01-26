@@ -1,20 +1,24 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 
-import {JokeStore} from './stores/JokeStore';
-import userStore from './stores/UserStore';
-import uiStore from './stores/UIStore';
-
 import {useStrict} from 'mobx';
-import {observer} from 'mobx-react';
-import classnames from 'classnames';
-import JokeDisplay from './components/presentational/JokeDisplay';
-import ReactionBarDisplay from './components/presentational/ReactionBarDisplay';
-import NavigationBarDisplay from './components/presentational/NavigationBarDisplay';
+import {Provider, observer} from 'mobx-react';
 
-import './index.css';
+// Import Stores
+import {JokeStore} from './mobxStores/JokeStore';
+import userStore from './mobxStores/UserStore';
+import uiStore from './mobxStores/UIStore';
+
+import classnames from 'classnames';
+
+import JokeDisplayConnected from './components/JokeDisplayConnected';
+import ReactionBarConnected from './components/ReactionBarConnected';
+import NavigationArrowConnected from './components/NavigationArrowConnected';
+import NavigationBarConnected from './components/NavigationBarConnected';
 
 import * as firebase from 'firebase';
+import DevTools from 'mobx-react-devtools';
+import './index.css';
 
 const config = {
 	apiKey: "AIzaSyAPsQu38dzjKXlUvRFrSp-wmyKPsL9cwvc",
@@ -25,30 +29,14 @@ const config = {
 };
 
 const fb = firebase.initializeApp(config).database().ref("jokes");
-window.fire = fb;
 const jokeStore = new JokeStore(fb);
 
 // Disallow updating store state outside of actions
 useStrict(true);
 
-const NavigationArrow = ({direction, enabled, onClick, firstTime}) => {
-	const classes = classnames({
-		navigationArrow: true,
-		[`navigationArrow--${direction}`]: true,
-		'navigationArrow--enabled': enabled,
-		'navigationArrow--disabled': !enabled,
-	});
-	return (
-		<div className={classes} onClick={enabled ? onClick : () => {}}>
-			{enabled && <i className={`fa fa-fw fa-2x fa-arrow-${direction}`} />}
-		</div>
-	);
-};
-
 // We wrap our app in the observer decorator to be able to
 // 	react to changes in the store
-const App = observer(({jokeStore, userStore, uiStore}) => {
-	const joke = jokeStore.jokesAsArray[jokeStore.currentJokeIndex] || {};
+const App = observer(() => {
 	return (
 		<div style={{
 			background: '#FEDB5A',
@@ -57,45 +45,14 @@ const App = observer(({jokeStore, userStore, uiStore}) => {
 			display: 'flex',
 			flexDirection: 'column',
 		}}>	
-			<JokeDisplay isEmpty={jokeStore.meta.isLoading} key={joke.id} text={joke.text} />
-			{!jokeStore.meta.isLoading && <div style={{display: 'flex', alignItems: 'center', paddingBottom: 8}}>
-				<NavigationArrow 
-					direction="left" 
-					enabled={jokeStore.hasPrevious}
-					firstTime={uiStore.hasClickedNav}
-					onClick={() => {
-						jokeStore.goToPreviousJoke()
-						uiStore.setClicked()
-					}}
-				/>
-				<ReactionBarDisplay 
-					onDislike={() => {
-						jokeStore.dislikeJoke(joke.id)
-						userStore.dislikeJoke(joke.id)
-					}}
-					onLike={() => {
-						jokeStore.likeJoke(joke.id)
-						userStore.likeJoke(joke.id)
-					}}
-					onFavorite={() => {
-						jokeStore.favoriteJoke(joke.id)
-						userStore.favoriteJoke(joke.id)
-					}}
-					hasLiked={userStore.isLiked(joke.id)}
-					hasDisliked={userStore.isDisliked(joke.id)}
-					hasFavorited={userStore.favoriteJokes[joke.id]}
-				/>
-				<NavigationArrow 
-					direction="right" 
-					enabled={jokeStore.hasNext}
-					firstTime={uiStore.hasClickedNav}
-					onClick={() => {
-						jokeStore.goToNextJoke()
-						uiStore.setClicked()
-					}}
-				/>
-			</div>}
-			{!jokeStore.meta.isLoading && <NavigationBarDisplay items={
+			<DevTools />
+			<JokeDisplayConnected />
+			<div style={{display: 'flex', alignItems: 'center', paddingBottom: 8}}>
+				<NavigationArrowConnected direction="previous" />
+				<ReactionBarConnected />
+				<NavigationArrowConnected direction="next" />
+			</div>
+			{<NavigationBarConnected items={
 				[{
 					caption: 'jokes',
 					iconName:  'fa-smile-o',
@@ -108,10 +65,12 @@ const App = observer(({jokeStore, userStore, uiStore}) => {
 				}]
 			}/>}
 		</div>
-	);
+	)
 });
 
 ReactDOM.render(
-	<App jokeStore={jokeStore} userStore={userStore} uiStore={uiStore} />,
+	<Provider jokeStore={jokeStore} uiStore={uiStore} userStore={userStore}>
+		<App />
+	</Provider>,
 	document.getElementById('root')
 );
